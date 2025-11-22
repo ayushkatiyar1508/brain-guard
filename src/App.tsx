@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider, RequireAuth } from 'miaoda-auth-react';
 import { supabase } from '@/db/supabase';
 import Header from '@/components/common/Header';
