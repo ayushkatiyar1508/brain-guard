@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Activity, Bell, Calendar, Video, Dumbbell, AlertTriangle } from 'lucide-react';
 import { alertsApi, routinesApi, monitoringApi } from '@/db/api';
+import { supabase } from '@/db/supabase';
 import type { Alert, DailyRoutine } from '@/types/types';
 
 export default function Dashboard() {
@@ -12,20 +13,36 @@ export default function Dashboard() {
   const [todayRoutines, setTodayRoutines] = useState<DailyRoutine[]>([]);
   const [cognitiveScore, setCognitiveScore] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-
-  const demoUserId = 'demo-user-id';
+  const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
-    loadDashboardData();
+    loadUserId();
   }, []);
+
+  useEffect(() => {
+    if (userId) {
+      loadDashboardData();
+    }
+  }, [userId]);
+
+  const loadUserId = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       const [alertsData, routinesData, avgScore] = await Promise.all([
-        alertsApi.getUnread(demoUserId).catch(() => []),
-        routinesApi.getTodayRoutines(demoUserId).catch(() => []),
-        monitoringApi.getAverageScore(demoUserId, 7).catch(() => 0),
+        alertsApi.getUnread(userId).catch(() => []),
+        routinesApi.getTodayRoutines(userId).catch(() => []),
+        monitoringApi.getAverageScore(userId, 7).catch(() => 0),
       ]);
 
       setAlerts(alertsData);

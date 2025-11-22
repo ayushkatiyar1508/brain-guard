@@ -4,6 +4,8 @@ import Alerts from './pages/Alerts';
 import DailyRoutines from './pages/DailyRoutines';
 import Exercises from './pages/Exercises';
 import VideoCall from './pages/VideoCall';
+import Login from './pages/Login';
+import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
 import type { ReactNode } from 'react';
 
@@ -15,6 +17,12 @@ interface RouteConfig {
 }
 
 const routes: RouteConfig[] = [
+  {
+    name: 'Login',
+    path: '/login',
+    element: <Login />,
+    visible: false
+  },
   {
     name: 'Dashboard',
     path: '/',
@@ -50,6 +58,12 @@ const routes: RouteConfig[] = [
     path: '/video-call',
     element: <VideoCall />,
     visible: true
+  },
+  {
+    name: 'Admin',
+    path: '/admin',
+    element: <Admin />,
+    visible: false
   },
   {
     name: 'Not Found',
