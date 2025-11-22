@@ -121,7 +121,7 @@ export default function Login() {
         console.log('User created successfully:', data.user.id);
         
         // Wait a moment for the trigger to create the profile
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Verify profile was created
         const { data: profile, error: profileError } = await supabase
@@ -132,24 +132,29 @@ export default function Login() {
         
         console.log('Profile check:', { profile, profileError });
         
-        if (profileError || !profile) {
-          console.error('Profile not created by trigger:', profileError);
-          // Profile wasn't created by trigger, create it manually
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              full_name: signupFullName,
-              email: email,
-              role: 'senior',
+        if (!profile) {
+          console.log('Profile not found, creating via RPC...');
+          // Profile wasn't created by trigger, use RPC to create it
+          const { data: rpcResult, error: rpcError } = await supabase
+            .rpc('create_user_profile', {
+              user_id: data.user.id,
+              user_full_name: signupFullName,
+              user_email: email,
             });
           
-          if (insertError) {
-            console.error('Failed to create profile manually:', insertError);
-            throw new Error('Account created but profile setup failed. Please contact support.');
+          console.log('RPC result:', { rpcResult, rpcError });
+          
+          if (rpcError) {
+            console.error('Failed to create profile via RPC:', rpcError);
+            throw new Error(`Database error: ${rpcError.message}`);
           }
           
-          console.log('Profile created manually');
+          if (rpcResult && !rpcResult.success) {
+            console.error('RPC returned failure:', rpcResult.message);
+            throw new Error(`Profile creation failed: ${rpcResult.message}`);
+          }
+          
+          console.log('Profile created successfully via RPC');
         }
         
         toast({
