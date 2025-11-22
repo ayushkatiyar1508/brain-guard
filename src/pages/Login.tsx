@@ -98,6 +98,8 @@ export default function Login() {
     setIsLoading(true);
     try {
       const email = `${signupUsername}@miaoda.com`;
+      console.log('Attempting signup with email:', email);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password: signupPassword,
@@ -108,14 +110,55 @@ export default function Login() {
         },
       });
 
-      if (error) throw error;
+      console.log('Signup response:', { data, error });
+
+      if (error) {
+        console.error('Signup error from Supabase:', error);
+        throw error;
+      }
 
       if (data.user) {
+        console.log('User created successfully:', data.user.id);
+        
+        // Wait a moment for the trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify profile was created
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        
+        console.log('Profile check:', { profile, profileError });
+        
+        if (profileError || !profile) {
+          console.error('Profile not created by trigger:', profileError);
+          // Profile wasn't created by trigger, create it manually
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              full_name: signupFullName,
+              email: email,
+              role: 'senior',
+            });
+          
+          if (insertError) {
+            console.error('Failed to create profile manually:', insertError);
+            throw new Error('Account created but profile setup failed. Please contact support.');
+          }
+          
+          console.log('Profile created manually');
+        }
+        
         toast({
           title: 'Account Created!',
           description: 'Welcome to Brain Guard. You are now logged in.',
         });
         navigate('/');
+      } else {
+        throw new Error('No user data returned from signup');
       }
     } catch (error: unknown) {
       console.error('Signup error:', error);
